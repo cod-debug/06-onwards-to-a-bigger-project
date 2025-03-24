@@ -1,30 +1,37 @@
+import { MongoClient } from "mongodb";
 import MeetupList from "../components/meetups/MeetupList";
+import Head from "next/head";
 
-const DUMMY_MEETUPS = [
-    {
-        id: 'm1',
-        title: 'A First Meetup',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg/1920px-Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg',
-        address: 'Some address 5, 12345 Some City',
-        description: 'This is a first meetup'
-    },
-    {
-        id: 'm2',
-        title: 'A Second Meetup',
-        image: 'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg/1920px-Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg',
-        address: 'Some address 10, 54321 Some City',
-        description: 'This is a second meetup'
-    }
-];
-
-function HomePage(props){
-    return (<MeetupList meetups={props.meetups} />)
+function HomePage(props) {
+    return (
+        <>
+            <Head>
+                <title>React Meetups</title>
+                <meta name="description" content="Browse a huge list highly active React meetups!"></meta>
+            </Head>
+            <MeetupList meetups={props.meetups} />
+        </>
+    )
 }
 
-export async function getStaticProps(){
+export async function getStaticProps() {
+    const client = await MongoClient.connect('mongodb+srv://quensed:Xa2pKZI6FU3WKnHP@cluster0.c5sfw.mongodb.net/meetups?retryWrites=true&w=majority&appName=Cluster0');
+    const db = client.db();
+
+    const meetupsCollection = db.collection('meetups');
+
+    const meetups = await meetupsCollection.find().toArray();
+
+    client.close();
+
     return {
         props: {
-            meetups: DUMMY_MEETUPS,
+            meetups: meetups.map(meetup => ({
+                title: meetup.title,
+                address: meetup.address,
+                image: meetup.image,
+                id: meetup._id.toString()
+            })),
         },
         revalidate: 1,
     };
